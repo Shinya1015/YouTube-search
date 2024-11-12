@@ -4,78 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YouTube Video Search</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    .video-item {
-      margin-bottom: 20px;
-    }
-    .video-item img {
-      width: 200px;
-      height: 113px;
-    }
-  </style>
 </head>
 <body>
+
   <h1>YouTube Video Search</h1>
-  <div>
-    <input type="text" id="search-query" placeholder="Enter search term" />
-    <button onclick="searchVideos()">Search</button>
-  </div>
+  
+  <!-- 搜索結果顯示區域 -->
   <div id="search-results"></div>
 
+  <!-- 搜索表單 -->
+  <form id="search-form">
+    <input type="text" id="search-query" placeholder="Enter search query" />
+    <button type="submit">Search</button>
+  </form>
+
+  <!-- 引入 axios 庫 -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <!-- 搜索功能的 JavaScript -->
   <script>
-    // YouTube API 金鑰
-    const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';
+    // 替換為您的 YouTube API 金鑰
+    const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI'; // 這裡填入您的 API 金鑰
+    const channelId = 'UCShCwWq4HD5qYI5sN0tbaSg'; // 這是 Shairu.ch_0801 頻道的 ID
 
-    // Shairu.ch_0801 的 YouTube 頻道 ID
-    const channelId = 'UCShCwWq4HD5qYI5sN0tbaSg'; // 這是 Shairu.ch_0801 的 Channel ID
+    // 當表單提交時執行搜尋
+    document.getElementById('search-form').addEventListener('submit', function(event) {
+      event.preventDefault(); // 防止表單重新加載頁面
+      const query = document.getElementById('search-query').value; // 獲取用戶輸入的搜尋關鍵字
 
-    // 搜尋影片的函數
-    function searchVideos() {
-      const query = document.getElementById('search-query').value;
-      if (!query) {
-        alert('Please enter a search term');
-        return;
-      }
-
-      // 使用 YouTube Data API 發送影片搜尋請求，並加入 channelId 來過濾特定頻道
+      // 使用 YouTube Data API 發送影片搜尋請求
       const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&channelId=${channelId}&type=video&key=${apiKey}`;
 
-      fetch(url)
-        .then(response => response.json())
-        .then(data => {
-          displayResults(data.items);
+      axios.get(url)
+        .then(response => {
+          console.log('搜索結果:', response.data.items); // 輸出搜索結果
+          let output = '';
+          response.data.items.forEach(item => {
+            output += `
+              <div class="video-item">
+                <h3>${item.snippet.title}</h3>
+                <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
+                <p>${item.snippet.description}</p>
+                <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">觀看影片</a>
+              </div>
+            `;
+          });
+          document.getElementById('search-results').innerHTML = output;
         })
         .catch(error => {
-          console.error('Error fetching data from YouTube:', error);
+          console.error('發生錯誤:', error); // 顯示錯誤訊息
         });
-    }
-
-    // 顯示搜尋結果
-    function displayResults(videos) {
-      const resultsContainer = document.getElementById('search-results');
-      resultsContainer.innerHTML = '';
-
-      if (videos.length === 0) {
-        resultsContainer.innerHTML = '<p>No results found.</p>';
-        return;
-      }
-
-      videos.forEach(video => {
-        const videoElement = document.createElement('div');
-        videoElement.classList.add('video-item');
-        videoElement.innerHTML = `
-          <h3>${video.snippet.title}</h3>
-          <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}" />
-          <p>${video.snippet.description}</p>
-          <a href="https://www.youtube.com/watch?v=${video.id.videoId}" target="_blank">Watch Video</a>
-        `;
-        resultsContainer.appendChild(videoElement);
-      });
-    }
+    });
   </script>
+
 </body>
 </html>

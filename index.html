@@ -87,63 +87,33 @@
     const query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
 
     if (!query) {
-      // 如果沒有輸入搜尋關鍵字，查詢該頻道的所有直播影片
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
-      
-      axios.get(url)
-        .then(response => {
-          console.log('API Response:', response.data);
-          let output = '';
-          if (response.data.items.length === 0) {
-            output = '<p>現在、ライブ動画はありません。</p>';  // 如果沒有直播，顯示此訊息
-          } else {
-            response.data.items.forEach(item => {
-              output += `
-                <div class="video-item">
-                  <h3>${item.snippet.title}</h3>
-                  <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
-                  <p>${item.snippet.description}</p>
-                  <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a>
-                </div>
-              `;
-            });
-          }
-          document.getElementById('search-results').innerHTML = output;
-        })
-        .catch(error => {
-          console.error('発生したエラー:', error);
-          document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
-        });
-
-    } else {
-      // 如果有關鍵字，執行搜尋
-const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
-
-      axios.get(url)
-        .then(response => {
-          console.log('API Response:', response.data);
-          let output = '';
-          if (response.data.items.length === 0) {
-            output = '<p>検索結果が見つかりませんでした。</p>';  // 如果沒有找到影片，顯示此訊息
-          } else {
-            response.data.items.forEach(item => {
-              output += `
-                <div class="video-item">
-                  <h3>${item.snippet.title}</h3>
-                  <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
-                  <p>${item.snippet.description}</p>
-                  <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a>
-                </div>
-              `;
-            });
-          }
-          document.getElementById('search-results').innerHTML = output;
-        })
-        .catch(error => {
-          console.error('発生したエラー:', error);
-          document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
-        });
+      alert('検索キーワードを入力してください');
+      return;
     }
+
+    // 查詢直播影片（包括回放）
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+
+    axios.get(url)
+      .then(response => {
+        console.log('API Response:', response.data);
+        let output = '';
+        response.data.items.forEach(item => {
+          output += `
+            <div class="video-item">
+              <h3>${item.snippet.title}</h3>
+              <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
+              <p>${item.snippet.description}</p>
+              <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a>
+            </div>
+          `;
+        });
+        document.getElementById('search-results').innerHTML = output;
+      })
+      .catch(error => {
+        console.error('発生したエラー:', error);
+        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
+      });
   });
 </script>
 

@@ -1,0 +1,56 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+h1 {
+    font-size: 2em;
+    margin: 20px 0;
+}
+
+#search-query {
+    padding: 10px;
+    font-size: 1.2em;
+    width: 50%;
+    margin-bottom: 10px;
+}
+
+#search-btn {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#search-btn:hover {
+    background-color: #0056b3;
+}
+
+#video-results {
+    margin-top: 20px;
+}
+
+.video-item {
+    margin: 15px;
+    display: inline-block;
+    width: 300px;
+}
+
+.video-item img {
+    width: 100%;
+}
+
+.video-item h3 {
+    font-size: 1.2em;
+    margin-top: 10px;
+}

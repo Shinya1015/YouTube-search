@@ -30,6 +30,9 @@
     // YouTube API 金鑰
     const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';
 
+    // Shairu.ch_0801 的 YouTube 頻道 ID
+    const channelId = 'UCShCwWq4HD5qYI5sN0tbaSg'; // 這是 Shairu.ch_0801 的 Channel ID
+
     // 搜尋影片的函數
     function searchVideos() {
       const query = document.getElementById('search-query').value;
@@ -38,8 +41,41 @@
         return;
       }
 
-      // 使用 YouTube Data API 發送影片搜尋請求
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+      // 使用 YouTube Data API 發送影片搜尋請求，並加入 channelId 來過濾特定頻道
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&channelId=${channelId}&type=video&key=${apiKey}`;
 
       fetch(url)
-        .then(response 
+        .then(response => response.json())
+        .then(data => {
+          displayResults(data.items);
+        })
+        .catch(error => {
+          console.error('Error fetching data from YouTube:', error);
+        });
+    }
+
+    // 顯示搜尋結果
+    function displayResults(videos) {
+      const resultsContainer = document.getElementById('search-results');
+      resultsContainer.innerHTML = '';
+
+      if (videos.length === 0) {
+        resultsContainer.innerHTML = '<p>No results found.</p>';
+        return;
+      }
+
+      videos.forEach(video => {
+        const videoElement = document.createElement('div');
+        videoElement.classList.add('video-item');
+        videoElement.innerHTML = `
+          <h3>${video.snippet.title}</h3>
+          <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}" />
+          <p>${video.snippet.description}</p>
+          <a href="https://www.youtube.com/watch?v=${video.id.videoId}" target="_blank">Watch Video</a>
+        `;
+        resultsContainer.appendChild(videoElement);
+      });
+    }
+  </script>
+</body>
+</html>

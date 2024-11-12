@@ -3,81 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube 検索</title>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <title>YouTube 動画検索</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      width: 80%;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .search-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .search-bar input {
+      width: 80%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .search-bar button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
     }
     .video-item {
+      background-color: white;
+      padding: 20px;
       margin-bottom: 20px;
-      border: 1px solid #ddd;
-      padding: 10px;
       border-radius: 8px;
-    }
-    .video-item img {
-      width: 120px;
-      height: 90px;
-      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
     .video-item h3 {
       margin: 0;
       font-size: 18px;
     }
+    .video-item img {
+      width: 100%;
+      max-width: 200px;
+      border-radius: 4px;
+    }
     .video-item p {
       font-size: 14px;
+      color: #555;
     }
     .video-item a {
-      display: inline-block;
-      margin-top: 10px;
-      color: #1E90FF;
+      color: #007bff;
       text-decoration: none;
-    }
-    .video-item a:hover {
-      text-decoration: underline;
     }
   </style>
 </head>
 <body>
-  <h1>Shairu.ch_0801 の YouTube 動画検索</h1>
-  <input type="text" id="search-query" placeholder="検索キーワードを入力してください" />
-  <button id="search-button">検索</button>
 
+<div class="container">
+  <h1>YouTube 動画検索</h1> <!-- 改為日文 -->
+  <div class="search-bar">
+    <input type="text" id="search-query" placeholder="検索キーワードを入力してください..."> <!-- 改為日文 -->
+    <button id="search-button">検索</button> <!-- 改為日文 -->
+  </div>
   <div id="search-results"></div>
+</div>
 
-  <script>
-    const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';  // 這是您的 API 金鑰
-    const channelId = 'UCShCwWq4HD5qYI5sN0tbaSg';  // Shairu.ch_0801 頻道的 channelId
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+  // API 金鑰
+  const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';
 
-    document.getElementById('search-button').addEventListener('click', () => {
-      const query = document.getElementById('search-query').value;  // 獲取用戶輸入的搜尋關鍵字
+  // 頻道 ID (Shairu.ch_0801)
+  const channelId = 'UCShCwWq4HD5qYI5sN0tbaSg';  // Shairu.ch_0801 頻道的 channelId
 
-      // 使用 YouTube API 發送影片搜尋請求
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&channelId=${channelId}&type=video&key=${apiKey}`;
+  // 綁定搜尋按鈕事件
+  document.getElementById('search-button').addEventListener('click', function () {
+    const query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
 
-      axios.get(url)
-        .then(response => {
-          console.log('搜索結果:', response.data.items);  // 顯示搜尋結果
+    if (!query) {
+      alert('検索キーワードを入力してください');  // 改為日文
+      return;
+    }
 
-          // 顯示搜尋結果
-          let output = '';
-          response.data.items.forEach(item => {
-            output += `
-              <div class="video-item">
-                <h3>${item.snippet.title}</h3>
-                <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
-                <p>${item.snippet.description}</p>
-                <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a>
-              </div>
-            `;
-          });
-          document.getElementById('search-results').innerHTML = output;
-        })
-        .catch(error => {
-          console.error('發生錯誤:', error);  // 顯示錯誤訊息
+    // 使用 YouTube Data API 進行影片搜尋，並且限制為指定頻道的影片
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&channelId=${channelId}&key=${apiKey}`;
+
+    axios.get(url)
+      .then(response => {
+        console.log('API Response:', response.data);  // 打印完整的 API 返回資料
+        let output = '';
+        response.data.items.forEach(item => {
+          output += `
+            <div class="video-item">
+              <h3>${item.snippet.title}</h3>
+              <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
+              <p>${item.snippet.description}</p>
+              <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a> <!-- 改為日文 -->
+            </div>
+          `;
         });
-    });
-  </script>
+        document.getElementById('search-results').innerHTML = output;  // 顯示搜尋結果
+      })
+      .catch(error => {
+        console.error('発生したエラー:', error);  // 改為日文
+        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';  <!-- 改為日文 -->
+      });
+  });
+</script>
+
 </body>
 </html>

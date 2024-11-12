@@ -5,10 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YouTube 搜索</title>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .video-item {
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .video-item img {
+      width: 120px;
+      height: 90px;
+      border-radius: 4px;
+    }
+    .video-item h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .video-item p {
+      font-size: 14px;
+    }
+    .video-item a {
+      display: inline-block;
+      margin-top: 10px;
+      color: #1E90FF;
+      text-decoration: none;
+    }
+    .video-item a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <h1>搜尋 Shairu.ch_0801 的 YouTube 影片</h1>
-  <input type="text" id="search-query" placeholder="輸入搜索關鍵字">
+  <input type="text" id="search-query" placeholder="輸入搜索關鍵字" />
   <button id="search-button">搜尋</button>
 
   <div id="search-results"></div>
@@ -20,12 +53,14 @@
     document.getElementById('search-button').addEventListener('click', () => {
       const query = document.getElementById('search-query').value;  // 獲取用戶輸入的搜索關鍵字
 
-      // 使用 YouTube Data API 發送影片搜尋請求，並加上 channelId 來篩選 Shairu.ch_0801 的影片
+      // 構造 API 請求的 URL
       const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&channelId=${channelId}&type=video&key=${apiKey}`;
 
       axios.get(url)
         .then(response => {
           console.log('搜索結果:', response.data.items);  // 輸出搜尋結果
+
+          // 顯示搜尋結果
           let output = '';
           response.data.items.forEach(item => {
             output += `
@@ -40,7 +75,7 @@
           document.getElementById('search-results').innerHTML = output;
         })
         .catch(error => {
-          console.error('發生錯誤:', error);
+          console.error('發生錯誤:', error);  // 顯示錯誤訊息
         });
     });
   </script>

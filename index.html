@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>しゃいるさんの配信検索</title>
+  <title>しゃいるさんのコメント検索</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -66,7 +66,7 @@
 <body>
 
 <div class="container">
-  <h1>しゃいるさんの配信検索</h1>
+  <h1>しゃいるさんのコメント検索</h1>
   <div class="search-bar">
     <input type="text" id="search-query" placeholder="検索キーワードを入力してください...">
     <button id="search-button">検索</button>
@@ -77,78 +77,49 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
   // API 金鑰
-  const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';
+  const apiKey = 'YOUR_API_KEY';
 
   // 頻道 ID (Shairu.ch_0801)
   const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 頻道的 channelId
 
-  // 搜尋留言的關鍵字
-  const commentSearchQuery = '面白い';  // 這裡你可以設定要搜尋的留言關鍵字
-
-  // 用於查詢影片的 API
-  async function searchVideos(query) {
-    const searchQuery = query ? encodeURIComponent(query) : '';
-    const order = searchQuery ? 'relevance' : 'date';  // 若空白搜尋，則依時間排序
-
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=${searchQuery}&order=${order}&type=video&key=${apiKey}`;
-
-    try {
-      const response = await axios.get(url);
-      return response.data.items;
-    } catch (error) {
-      console.error('影片搜尋發生錯誤:', error);
-      return [];
-    }
-  }
-
-  // 用於查詢影片留言的 API
-  async function searchComments(videoId) {
-    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${apiKey}`;
-
-    try {
-      const response = await axios.get(url);
-      const comments = response.data.items;
-      const matchingComments = comments.filter(comment =>
-        comment.snippet.topLevelComment.snippet.textDisplay.includes(commentSearchQuery)
-      );
-      return matchingComments;
-    } catch (error) {
-      console.error('留言搜尋發生錯誤:', error);
-      return [];
-    }
-  }
-
   // 綁定搜尋按鈕事件
-  document.getElementById('search-button').addEventListener('click', async function () {
+  document.getElementById('search-button').addEventListener('click', function () {
     const query = document.getElementById('search-query').value.trim();  // 取得輸入的搜尋關鍵字
 
-    // 先搜尋影片
-    const videos = await searchVideos(query);
+    // 若搜尋框為空，顯示所有留言
+    const searchQuery = query ? encodeURIComponent(query) : '';
+    const order = 'date';  // 設定為依時間排序
 
-    let output = '';
-    if (videos.length === 0) {
-      output = '<p>現在、該キーワードに該当する動画はありません。</p>';
-    } else {
-      for (const video of videos) {
-        const videoId = video.id.videoId;
-        const comments = await searchComments(videoId);
+    // 使用 YouTube Data API 查詢該頻道的留言（回放影片）
+    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&channelId=${channelId}&q=${searchQuery}&order=${order}&key=${apiKey}`;
 
-        output += `
-          <div class="video-item">
-            <h3>${video.snippet.title}</h3>
-            <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}" />
-            <p>${video.snippet.description}</p>
-            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
-            <h4>該当するコメント：</h4>
-            <ul>
-              ${comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('')}
-            </ul>
-          </div>
-        `;
-      }
-    }
-
-    document.getElementById('search-results').innerHTML = output;
+    axios.get(url)
+      .then(response => {
+        console.log('API Response:', response.data);
+        let output = '';
+        if (response.data.items.length === 0) {
+          output = '<p>現在、該キーワードに該当するコメントはありません。</p>';
+        } else {
+          response.data.items.forEach(item => {
+            // 顯示包含關鍵字的留言文字
+            const commentText = item.snippet.topLevelComment.snippet.textDisplay;
+            if (commentText.includes(query)) {
+              output += `
+                <div class="video-item">
+                  <h3>動画タイトル: ${item.snippet.videoId}</h3>
+                  <p><strong>コメント：</strong>${commentText}</p>
+                  <a href="https://www.youtube.com/watch?v=${item.snippet.videoId}" target="_blank">動画を見る</a>
+                </div>
+              `;
+            }
+          });
+        }
+        document.getElementById('search-results').innerHTML = output;
+      })
+      .catch(error => {
+        console.error('発生したエラー:', error);
+        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
+      });
   });
 </script>
 

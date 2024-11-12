@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube 動画検索</title>
+  <title>YouTube ライブ動画検索</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -66,10 +66,10 @@
 <body>
 
 <div class="container">
-  <h1>YouTube 動画検索</h1> <!-- 改為日文 -->
+  <h1>YouTube ライブ動画検索</h1>
   <div class="search-bar">
-    <input type="text" id="search-query" placeholder="検索キーワードを入力してください..."> <!-- 改為日文 -->
-    <button id="search-button">検索</button> <!-- 改為日文 -->
+    <input type="text" id="search-query" placeholder="検索キーワードを入力してください...">
+    <button id="search-button">検索</button>
   </div>
   <div id="search-results"></div>
 </div>
@@ -87,16 +87,16 @@
     const query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
 
     if (!query) {
-      alert('検索キーワードを入力してください');  // 改為日文
+      alert('検索キーワードを入力してください');
       return;
     }
 
-    // 使用 YouTube Data API 進行影片搜尋，並且限制為指定頻道的影片
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&channelId=${channelId}&key=${apiKey}`;
+    // 使用 YouTube Data API 查詢該頻道的直播影片
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
 
     axios.get(url)
       .then(response => {
-        console.log('API Response:', response.data);  // 打印完整的 API 返回資料
+        console.log('API Response:', response.data);
         let output = '';
         response.data.items.forEach(item => {
           output += `
@@ -104,15 +104,15 @@
               <h3>${item.snippet.title}</h3>
               <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
               <p>${item.snippet.description}</p>
-              <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a> <!-- 改為日文 -->
+              <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a>
             </div>
           `;
         });
-        document.getElementById('search-results').innerHTML = output;  // 顯示搜尋結果
+        document.getElementById('search-results').innerHTML = output;
       })
       .catch(error => {
-        console.error('発生したエラー:', error);  // 改為日文
-        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';  <!-- 改為日文 -->
+        console.error('発生したエラー:', error);
+        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
       });
   });
 </script>

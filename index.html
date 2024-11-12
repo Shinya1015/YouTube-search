@@ -76,19 +76,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-  // API キー
+  // API 金鑰
   const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';
 
-  // チャンネル ID (Shairu.ch_0801)
-  const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 チャンネルの ID
+  // 頻道 ID (Shairu.ch_0801)
+  const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 頻道的 channelId
 
-  // コメント検索キーワード
-  const commentSearchQuery = '面白い';  // ここに検索したいキーワードを設定
+  // 留言搜尋關鍵字
+  const commentSearchQuery = '面白い';  // 在此設置要搜尋的留言關鍵字
 
-  // 動画検索用 API
+  // 影片搜尋用 API
   async function searchVideos(query) {
     const searchQuery = query ? encodeURIComponent(query) : '';
-    const order = searchQuery ? 'relevance' : 'date';  // 空白の時は日付順で並べ替え
+    const order = searchQuery ? 'relevance' : 'date';  // 若搜尋框為空，則依時間排序
 
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=${searchQuery}&order=${order}&type=video&key=${apiKey}`;
 
@@ -96,39 +96,39 @@
       const response = await axios.get(url);
       return response.data.items;
     } catch (error) {
-      console.error('動画検索エラー:', error);
+      console.error('影片搜尋錯誤:', error);
       return [];
     }
   }
 
-  // コメント検索用 API
+  // 留言搜尋用 API
   async function searchComments(videoId) {
     const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${apiKey}`;
 
     try {
       const response = await axios.get(url);
       const comments = response.data.items;
-      console.log('コメントデータ:', comments);  // コメントのデータ構造を表示して調べる
+      console.log('留言資料:', comments);  // 顯示留言的資料結構，便於調試
       const matchingComments = comments.filter(comment =>
-        comment.snippet.topLevelComment.snippet.textDisplay.toLowerCase().includes(commentSearchQuery.toLowerCase())  // 小文字で一致するかチェック
+        comment.snippet.topLevelComment.snippet.textDisplay.toLowerCase().includes(commentSearchQuery.toLowerCase())  // 不區分大小寫進行搜尋
       );
       return matchingComments;
     } catch (error) {
-      console.error('コメント検索エラー:', error);
+      console.error('留言搜尋錯誤:', error);
       return [];
     }
   }
 
-  // 検索ボタンのクリックイベント
+  // 點擊搜尋按鈕事件
   document.getElementById('search-button').addEventListener('click', async function () {
-    const query = document.getElementById('search-query').value.trim();  // 入力された検索キーワードを取得
+    const query = document.getElementById('search-query').value.trim();  // 取得輸入的搜尋關鍵字
 
-    // 動画を検索
+    // 搜尋影片
     const videos = await searchVideos(query);
 
     let output = '';
     if (videos.length === 0) {
-      output = '<p>現在、該当する動画はありません。</p>';
+      output = '<p>現在、該キーワードに該当する動画はありません。</p>';
     } else {
       for (const video of videos) {
         const videoId = video.id.videoId;
@@ -142,13 +142,14 @@
             <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
             <h4>該当するコメント：</h4>
             <ul>
-              ${comments.length > 0 ? comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('') : '<li>該当するコメントがありません。</li>'}
+              ${comments.length > 0 ? comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('') : '<li>該当するコメントはありません。</li>'}
             </ul>
           </div>
         `;
       }
     }
 
+    // 顯示搜尋結果
     document.getElementById('search-results').innerHTML = output;
   });
 </script>

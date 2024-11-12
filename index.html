@@ -108,8 +108,9 @@
     try {
       const response = await axios.get(url);
       const comments = response.data.items;
+      console.log('留言資料:', comments);  // 顯示留言資料，進行調試
       const matchingComments = comments.filter(comment =>
-        comment.snippet.topLevelComment.snippet.textDisplay.includes(commentSearchQuery)
+        comment.snippet.topLevelComment.snippet.textDisplay.toLowerCase().includes(commentSearchQuery.toLowerCase())  // 更改為不區分大小寫
       );
       return matchingComments;
     } catch (error) {
@@ -141,7 +142,7 @@
             <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
             <h4>該当するコメント：</h4>
             <ul>
-              ${comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('')}
+              ${comments.length > 0 ? comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('') : '<li>該当するコメントがありません。</li>'}
             </ul>
           </div>
         `;

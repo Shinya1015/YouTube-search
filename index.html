@@ -76,19 +76,19 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-  // API金鑰
+  // API 金鑰
   const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';
 
-  // 頻道ID（Shairu.ch_0801）
+  // 頻道 ID (Shairu.ch_0801)
   const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 頻道的 channelId
 
   // 搜尋留言的關鍵字
-  const commentSearchQuery = '面白い';  // 設定要搜尋的留言關鍵字
+  const commentSearchQuery = '面白い';  // 這裡你可以設定要搜尋的留言關鍵字
 
-  // 影片搜尋 API
+  // 用於查詢影片的 API
   async function searchVideos(query) {
     const searchQuery = query ? encodeURIComponent(query) : '';
-    const order = searchQuery ? 'relevance' : 'date';  // 如果搜尋框為空，則按日期排序
+    const order = searchQuery ? 'relevance' : 'date';  // 若空白搜尋，則依時間排序
 
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=${searchQuery}&order=${order}&type=video&key=${apiKey}`;
 
@@ -96,72 +96,58 @@
       const response = await axios.get(url);
       return response.data.items;
     } catch (error) {
-      console.error('動画検索エラー:', error);
+      console.error('影片搜尋發生錯誤:', error);
       return [];
     }
   }
 
-  // 留言搜尋 API
+  // 用於查詢影片留言的 API
   async function searchComments(videoId) {
     const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${apiKey}`;
 
     try {
       const response = await axios.get(url);
       const comments = response.data.items;
-      console.log('コメントデータ:', comments);  // 顯示留言資料結構以便除錯
-
-      // 搜尋留言中符合的關鍵字
       const matchingComments = comments.filter(comment =>
-        comment.snippet.topLevelComment.snippet.textDisplay.toLowerCase().includes(commentSearchQuery.toLowerCase())  // 不區分大小寫搜尋
+        comment.snippet.topLevelComment.snippet.textDisplay.includes(commentSearchQuery)
       );
-
-      // 如果沒有符合的留言，則返回 null
-      return matchingComments.length > 0 ? matchingComments : null;  // 沒有符合的留言則返回 null
+      return matchingComments;
     } catch (error) {
-      console.error('コメント検索エラー:', error);
-      return null;  // 搜尋錯誤時返回 null
+      console.error('留言搜尋發生錯誤:', error);
+      return [];
     }
   }
 
-  // 搜尋按鈕點擊事件
+  // 綁定搜尋按鈕事件
   document.getElementById('search-button').addEventListener('click', async function () {
     const query = document.getElementById('search-query').value.trim();  // 取得輸入的搜尋關鍵字
 
-    // 搜尋影片
+    // 先搜尋影片
     const videos = await searchVideos(query);
 
     let output = '';
-    if (videos.length === 0 && query !== '') {  // 如果有搜尋結果但沒有找到影片，顯示沒有找到
+    if (videos.length === 0) {
       output = '<p>現在、該キーワードに該当する動画はありません。</p>';
     } else {
       for (const video of videos) {
         const videoId = video.id.videoId;
         const comments = await searchComments(videoId);
 
-        // 只有當留言符合關鍵字時或搜尋框為空時，才顯示留言
-        if (comments || query === '') {
-          output += `
-            <div class="video-item">
-              <h3>${video.snippet.title}</h3>
-              <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}" />
-              <p>${video.snippet.description}</p>
-              <a href="https://www.youtube.com/watch?v=${video.id.videoId}" target="_blank">動画を見る</a>
-          `;
-
-          if (comments) {
-            output += `<h4>該当するコメント：</h4><ul>`;
-            comments.forEach(comment => {
-              output += `
-                <li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>
-              `;
-            });
-            output += `</ul>`;
-          }
-
-          output += `</div>`;
-        }
+        output += `
+          <div class="video-item">
+            <h3>${video.snippet.title}</h3>
+            <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}" />
+            <p>${video.snippet.description}</p>
+            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
+            <h4>該当するコメント：</h4>
+            <ul>
+              ${comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('')}
+            </ul>
+          </div>
+        `;
       }
     }
+
     document.getElementById('search-results').innerHTML = output;
   });
 </script>

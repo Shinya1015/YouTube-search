@@ -115,7 +115,7 @@
         comment.snippet.topLevelComment.snippet.textDisplay.toLowerCase().includes(commentSearchQuery.toLowerCase())  // 不區分大小寫進行搜尋
       );
 
-      // 如果沒有符合的留言，返回無符合留言的訊息
+      // 如果沒有符合的留言，返回空陣列
       return matchingComments.length > 0 ? matchingComments : null;  // 如果沒有符合的留言，返回 null
     } catch (error) {
       console.error('留言搜尋錯誤:', error);
@@ -138,18 +138,20 @@
         const videoId = video.id.videoId;
         const comments = await searchComments(videoId);
 
-        // 如果有符合的留言，則顯示該留言
-        if (comments) {
+        // 如果有符合的留言且搜尋框有關鍵字，才顯示留言
+        if (comments || query === '') {
           output += `
             <div class="video-item">
               <h3>${video.snippet.title}</h3>
               <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}" />
               <p>${video.snippet.description}</p>
               <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
-              <h4>該当するコメント：</h4>
-              <ul>
-                ${comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('')}
-              </ul>
+              ${comments ? `
+                <h4>該当するコメント：</h4>
+                <ul>
+                  ${comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('')}
+                </ul>
+              ` : ''}
             </div>
           `;
         }

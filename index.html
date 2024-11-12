@@ -68,7 +68,7 @@
 <div class="container">
   <h1>YouTube ライブ動画検索</h1>
   <div class="search-bar">
-    <input type="text" id="search-query" placeholder="検索キーワードを入力してください...">
+    <input type="text" id="search-query" placeholder="">  <!-- 這裡移除了placeholder的提示文字 -->
     <button id="search-button">検索</button>
   </div>
   <div id="search-results"></div>
@@ -84,36 +84,36 @@
 
   // 綁定搜尋按鈕事件
   document.getElementById('search-button').addEventListener('click', function () {
-    let query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
+    const query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
 
-    // 如果沒有輸入關鍵字，將其設為空字串進行搜尋所有影片
     if (!query) {
-      query = '';  // 允許空白搜尋
-    }
+      // 如果搜尋框為空，顯示所有直播影片
+      document.getElementById('search-results').innerHTML = '<p>現在、すべてのライブ動画を表示しています...</p>';
+    } else {
+      // 使用 YouTube Data API 查詢該頻道的直播影片
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
 
-    // 使用 YouTube Data API 查詢該頻道的直播影片
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
-
-    axios.get(url)
-      .then(response => {
-        console.log('API Response:', response.data);
-        let output = '';
-        response.data.items.forEach(item => {
-          output += `
-            <div class="video-item">
-              <h3>${item.snippet.title}</h3>
-              <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
-              <p>${item.snippet.description}</p>
-              <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a>
-            </div>
-          `;
+      axios.get(url)
+        .then(response => {
+          console.log('API Response:', response.data);
+          let output = '';
+          response.data.items.forEach(item => {
+            output += `
+              <div class="video-item">
+                <h3>${item.snippet.title}</h3>
+                <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
+                <p>${item.snippet.description}</p>
+                <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a>
+              </div>
+            `;
+          });
+          document.getElementById('search-results').innerHTML = output;
+        })
+        .catch(error => {
+          console.error('発生したエラー:', error);
+          document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
         });
-        document.getElementById('search-results').innerHTML = output;
-      })
-      .catch(error => {
-        console.error('発生したエラー:', error);
-        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
-      });
+    }
   });
 </script>
 

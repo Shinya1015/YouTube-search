@@ -131,7 +131,7 @@
     const videos = await searchVideos(query);
 
     let output = '';
-    if (videos.length === 0) {
+    if (videos.length === 0 && query !== '') {  // 如果有搜尋結果但沒有找到影片，顯示沒有找到
       output = '<p>現在、該キーワードに該当する動画はありません。</p>';
     } else {
       for (const video of videos) {

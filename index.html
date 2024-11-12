@@ -117,7 +117,7 @@
 
     } else {
       // 如果有關鍵字，執行搜尋
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&eventType=live&type=video&key=${apiKey}`;
 
       axios.get(url)
         .then(response => {

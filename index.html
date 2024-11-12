@@ -84,18 +84,21 @@
 
   // 綁定搜尋按鈕事件
   document.getElementById('search-button').addEventListener('click', function () {
-    const query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
+    const query = document.getElementById('search-query').value.trim();  // 取得輸入的搜尋關鍵字
 
-    // API 查詢 URL，如果沒有輸入關鍵字則搜尋所有影片
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+    // 若搜尋框為空，設置為搜尋所有影片並按時間排序
+    const searchQuery = query ? encodeURIComponent(query) : '';
+    const order = searchQuery ? 'relevance' : 'date';  // 若空白搜尋，則依時間排序
 
-    // 進行 API 請求
+    // 使用 YouTube Data API 查詢該頻道的影片（包括回放、直播等）
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&q=${searchQuery}&order=${order}&type=video&key=${apiKey}`;
+
     axios.get(url)
       .then(response => {
         console.log('API Response:', response.data);
         let output = '';
         if (response.data.items.length === 0) {
-          output = '<p>現在、動画はありません。</p>';  // 如果沒有找到影片
+          output = '<p>現在、該キーワードに該当する動画はありません。</p>';
         } else {
           response.data.items.forEach(item => {
             output += `

@@ -116,10 +116,10 @@
       );
 
       // 如果沒有符合的留言，返回無符合留言的訊息
-      return matchingComments.length > 0 ? matchingComments : [{ text: '該當するコメントはありません。' }];
+      return matchingComments.length > 0 ? matchingComments : null;  // 如果沒有符合的留言，返回 null
     } catch (error) {
       console.error('留言搜尋錯誤:', error);
-      return [{ text: '留言搜尋發生錯誤' }];
+      return null;  // 如果搜尋錯誤，返回 null
     }
   }
 
@@ -138,18 +138,21 @@
         const videoId = video.id.videoId;
         const comments = await searchComments(videoId);
 
-        output += `
-          <div class="video-item">
-            <h3>${video.snippet.title}</h3>
-            <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}" />
-            <p>${video.snippet.description}</p>
-            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
-            <h4>該当するコメント：</h4>
-            <ul>
-              ${comments.length > 0 ? comments.map(comment => `<li>${comment.snippet ? comment.snippet.topLevelComment.snippet.textDisplay : comment.text}</li>`).join('') : '<li>該当するコメントはありません。</li>'}
-            </ul>
-          </div>
-        `;
+        // 如果有符合的留言，則顯示該留言
+        if (comments) {
+          output += `
+            <div class="video-item">
+              <h3>${video.snippet.title}</h3>
+              <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}" />
+              <p>${video.snippet.description}</p>
+              <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
+              <h4>該当するコメント：</h4>
+              <ul>
+                ${comments.map(comment => `<li>${comment.snippet.topLevelComment.snippet.textDisplay}</li>`).join('')}
+              </ul>
+            </div>
+          `;
+        }
       }
     }
 

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube 搜索</title>
+  <title>YouTube 検索</title>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>
     body {
@@ -40,25 +40,25 @@
   </style>
 </head>
 <body>
-  <h1>搜尋 Shairu.ch_0801 的 YouTube 影片</h1>
-  <input type="text" id="search-query" placeholder="輸入搜索關鍵字" />
-  <button id="search-button">搜尋</button>
+  <h1>Shairu.ch_0801 の YouTube 動画検索</h1>
+  <input type="text" id="search-query" placeholder="検索キーワードを入力してください" />
+  <button id="search-button">検索</button>
 
   <div id="search-results"></div>
 
   <script>
-    const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';  // 您的 API 金鑰
-    const channelId = 'UCShCwWq4HD5qYI5sN0tbaSg';  // Shairu.ch_0801 的 channelId
+    const apiKey = 'AIzaSyD1K48pWIIm-PhauUSjLtOLHGVGEd5HhmI';  // 這是您的 API 金鑰
+    const channelId = 'UCShCwWq4HD5qYI5sN0tbaSg';  // Shairu.ch_0801 頻道的 channelId
 
     document.getElementById('search-button').addEventListener('click', () => {
-      const query = document.getElementById('search-query').value;  // 獲取用戶輸入的搜索關鍵字
+      const query = document.getElementById('search-query').value;  // 獲取用戶輸入的搜尋關鍵字
 
-      // 構造 API 請求的 URL
+      // 使用 YouTube API 發送影片搜尋請求
       const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&channelId=${channelId}&type=video&key=${apiKey}`;
 
       axios.get(url)
         .then(response => {
-          console.log('搜索結果:', response.data.items);  // 輸出搜尋結果
+          console.log('搜索結果:', response.data.items);  // 顯示搜尋結果
 
           // 顯示搜尋結果
           let output = '';
@@ -68,7 +68,7 @@
                 <h3>${item.snippet.title}</h3>
                 <img src="${item.snippet.thumbnails.default.url}" alt="${item.snippet.title}" />
                 <p>${item.snippet.description}</p>
-                <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">觀看影片</a>
+                <a href="https://www.youtube.com/watch?v=${item.id.videoId}" target="_blank">動画を見る</a>
               </div>
             `;
           });

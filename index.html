@@ -68,7 +68,7 @@
 <div class="container">
   <h1>YouTube ライブ動画検索</h1>
   <div class="search-bar">
-    <input type="text" id="search-query" placeholder="">
+    <input type="text" id="search-query" placeholder="検索キーワードを入力してください...">
     <button id="search-button">検索</button>
   </div>
   <div id="search-results"></div>
@@ -84,11 +84,11 @@
 
   // 綁定搜尋按鈕事件
   document.getElementById('search-button').addEventListener('click', function () {
-    const query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
+    let query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
 
+    // 如果沒有輸入關鍵字，將其設為空字串進行搜尋所有影片
     if (!query) {
-      alert('検索キーワードを入力してください');
-      return;
+      query = '';  // 允許空白搜尋
     }
 
     // 使用 YouTube Data API 查詢該頻道的直播影片

@@ -84,11 +84,11 @@
 
   // 綁定搜尋按鈕事件
   document.getElementById('search-button').addEventListener('click', function () {
-    const query = document.getElementById('search-query').value;  // 取得輸入的搜尋關鍵字
+    const query = document.getElementById('search-query').value.trim();  // 取得並移除前後空白的搜尋關鍵字
 
+    // 即使沒有輸入文字也進行搜尋
     if (!query) {
-      alert('検索キーワードを入力してください');
-      return;
+      alert('キーワードを入力していなくても検索します');
     }
 
     // 使用 YouTube Data API 查詢該頻道的直播影片
@@ -108,7 +108,8 @@
             </div>
           `;
         });
-        document.getElementById('search-results').innerHTML = output;
+        // 顯示搜尋結果
+        document.getElementById('search-results').innerHTML = output || '<p>検索結果がありません。</p>';
       })
       .catch(error => {
         console.error('発生したエラー:', error);

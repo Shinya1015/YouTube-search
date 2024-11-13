@@ -61,11 +61,16 @@
       color: #007bff;
       text-decoration: none;
     }
-    .comment-item {
-      background-color: #f9f9f9;
-      padding: 10px;
+    .comment-section {
       margin-top: 10px;
+      background-color: #fafafa;
+      padding: 10px;
       border-radius: 4px;
+    }
+    .comment-item {
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #333;
     }
   </style>
 </head>
@@ -82,72 +87,49 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-  // API 金鑰
-  const apiKey = 'AIzaSyC_vDGk4fYm-pk8sk7ZylN9hMfOiePDgkI';  // 第一個 API 金鑰
-  const backupApiKey = 'AIzaSyCrKxTruUdr0EXAm8r7c2ZspbOtx-pKLXM';  // 備用 API 金鑰
+  const apiKey = 'AIzaSyC_vDGk4fYm-pk8sk7ZylN9hMfOiePDgkI';  // 主用API金鑰
+  const backupApiKey = 'AIzaSyCrKxTruUdr0EXAm8r7c2ZspbOtx-pKLXM';  // 備用API金鑰
+  let currentApiKey = apiKey;  // 預設為主用API金鑰
 
-  // 頻道 ID (Shairu.ch_0801)
-  const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 頻道的 channelId
-
-  // 檢查 API 是否有效的函數
-  function checkApiStatus(apiKey) {
-    return axios.get(`https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${channelId}&key=${apiKey}`)
-      .then(response => response.status === 200)
-      .catch(() => false);
-  }
-
-  // 預設使用的 API
-  let currentApiKey = apiKey;
-
-  // 使用備用的 API
-  async function switchApi() {
-    const apiStatus = await checkApiStatus(apiKey);
-    if (!apiStatus) {
-      currentApiKey = backupApiKey;
-    }
-  }
-
-  // 預設使用主 API，如果無法使用則切換到備用 API
-  switchApi();
+  const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 頻道ID
 
   // 綁定搜尋按鈕事件
   document.getElementById('search-button').addEventListener('click', function () {
-    const query = document.getElementById('search-query').value.trim();  // 取得輸入的搜尋關鍵字
-    document.getElementById('search-results').innerHTML = '';  // 清空舊的搜尋結果
+    const query = document.getElementById('search-query').value.trim();  // 取得搜尋關鍵字
+    document.getElementById('search-results').innerHTML = '';  // 清空舊結果
 
-    // 如果關鍵字為空，顯示所有影片
     if (!query) {
-      searchAllVideos();  // 呼叫搜尋所有影片的函數
-      return;
+      // 若搜尋關鍵字為空白，搜尋所有影片
+      searchAllVideos();
+    } else {
+      // 搜尋特定影片或留言
+      searchVideosAndComments(query);
     }
-
-    // 如果有關鍵字，搜尋影片與留言
-    searchVideosAndComments(query);
   });
 
-  // 搜尋所有影片
+  // 搜尋所有影片（不輸入關鍵字時）
   function searchAllVideos() {
-    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video&order=date&key=${currentApiKey}`;
+    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&order=date&type=video&key=${currentApiKey}`;
 
     axios.get(videoSearchUrl)
       .then(response => {
         const videoItems = response.data.items;
         if (videoItems.length === 0) {
           document.getElementById('search-results').innerHTML = '<p>このチャンネルには動画がありません。</p>';
-          return;
-        }
+        } else {
+          videoItems.forEach(video => {
+            const videoElement = document.createElement('div');
+            videoElement.classList.add('video-item');
+            videoElement.innerHTML = `
+              <img src="${video.snippet.thumbnails.high.url}" alt="${video.snippet.title}">
+              <h3><a href="https://www.youtube.com/watch?v=${video.id.videoId}" target="_blank">${video.snippet.title}</a></h3>
+            `;
+            document.getElementById('search-results').appendChild(videoElement);
 
-        // 顯示所有影片
-        videoItems.forEach(video => {
-          const videoId = video.id.videoId;
-          const videoElement = `
-            <div class="video-item">
-              <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
-              <h3><a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">${video.snippet.title}</a></h3>
-            </div>
-          `;
-          document.getElementById('search-results').innerHTML += videoElement;
-        });
+            // 搜尋留言
+            searchComments(video.id.videoId, '');
+          });
+        }
       })
       .catch(error => {
         console.error('動画の取得に失敗しました:', error);
@@ -155,32 +137,33 @@
       });
   }
 
-  // 搜尋影片和留言
+  // 搜尋影片並搜尋留言
   function searchVideosAndComments(query) {
-    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video&order=date&key=${currentApiKey}`;
+    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=5&type=video&key=${currentApiKey}`;
 
     axios.get(videoSearchUrl)
       .then(response => {
         const videoItems = response.data.items;
         if (videoItems.length === 0) {
           document.getElementById('search-results').innerHTML = '<p>このチャンネルには動画がありません。</p>';
-          return;
+        } else {
+          videoItems.forEach(video => {
+            const videoId = video.id.videoId;
+            const videoTitle = video.snippet.title;
+
+            // 顯示影片資訊
+            const videoElement = document.createElement('div');
+            videoElement.classList.add('video-item');
+            videoElement.innerHTML = `
+              <img src="${video.snippet.thumbnails.high.url}" alt="${videoTitle}">
+              <h3><a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">${videoTitle}</a></h3>
+            `;
+            document.getElementById('search-results').appendChild(videoElement);
+
+            // 搜尋留言
+            searchComments(videoId, query, videoElement);
+          });
         }
-
-        // 顯示影片列表
-        videoItems.forEach(video => {
-          const videoId = video.id.videoId;
-          const videoElement = `
-            <div class="video-item">
-              <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
-              <h3><a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">${video.snippet.title}</a></h3>
-            </div>
-          `;
-          document.getElementById('search-results').innerHTML += videoElement;
-
-          // 搜尋該影片的留言
-          searchComments(videoId, query);
-        });
       })
       .catch(error => {
         console.error('動画の取得に失敗しました:', error);
@@ -188,20 +171,18 @@
       });
   }
 
-  // 搜尋留言
-  function searchComments(videoId, query) {
-    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${currentApiKey}`;
+  // 搜尋留言並顯示
+  function searchComments(videoId, query, videoElement = null, nextPageToken = '') {
+    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&maxResults=20&pageToken=${nextPageToken}&key=${currentApiKey}`;
 
     axios.get(url)
       .then(response => {
         const comments = response.data.items;
         let commentOutput = '';
-        console.log("留言數據：", comments); // 用來檢查 API 回傳的留言數據
 
         comments.forEach(comment => {
           const commentText = comment.snippet.topLevelComment.snippet.textDisplay;
-          // 確保留言內容包含搜尋關鍵字，並忽略大小寫
-          if (commentText.toLowerCase().includes(query.toLowerCase())) {
+          if (commentText.includes(query)) {
             commentOutput += `
               <div class="comment-item">
                 <p><strong>コメント：</strong>${commentText}</p>
@@ -210,17 +191,21 @@
           }
         });
 
-        if (commentOutput) {
+        // 顯示留言
+        if (commentOutput && videoElement) {
           const commentSection = document.createElement('div');
           commentSection.classList.add('comment-section');
-          commentSection.innerHTML = commentOutput;
-          document.getElementById('search-results').appendChild(commentSection);
-        } else {
-          console.log("未找到符合條件的留言。"); // 顯示沒有找到匹配的留言
+          commentSection.innerHTML = `<h3>コメント：</h3>${commentOutput}`;
+          videoElement.appendChild(commentSection);
+        }
+
+        // 如果還有下一頁留言，繼續加載
+        if (response.data.nextPageToken) {
+          searchComments(videoId, query, videoElement, response.data.nextPageToken);
         }
       })
       .catch(error => {
-        console.error('留言搜尋失敗:', error);
+        console.error('コメントの取得に失敗しました:', error);
       });
   }
 </script>

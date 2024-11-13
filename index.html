@@ -3,132 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>YouTube 動画検索</title>
+  <title>しゃいるさんのコメント検索</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
       margin: 0;
       padding: 0;
+      background-color: #f4f4f4;
     }
-
     .container {
       width: 80%;
       margin: 0 auto;
-      text-align: center;
+      padding: 20px;
     }
-
-    h1 {
-      font-size: 2em;
-      margin: 20px 0;
+    .search-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
     }
-
-    #search-query {
+    .search-bar input {
+      width: 80%;
       padding: 10px;
-      font-size: 1.2em;
-      width: 50%;
-      margin-bottom: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
     }
-
-    #search-btn {
+    .search-bar button {
       padding: 10px 20px;
-      font-size: 1.2em;
+      font-size: 16px;
+      cursor: pointer;
       background-color: #007bff;
       color: white;
       border: none;
-      cursor: pointer;
+      border-radius: 4px;
     }
-
-    #search-btn:hover {
-      background-color: #0056b3;
-    }
-
-    #video-results {
-      margin-top: 20px;
-    }
-
     .video-item {
-      margin: 15px;
-      display: inline-block;
-      width: 300px;
-      vertical-align: top;
+      background-color: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
-
+    .video-item h3 {
+      margin: 0;
+      font-size: 18px;
+    }
     .video-item img {
       width: 100%;
+      max-width: 200px;
+      border-radius: 4px;
     }
-
-    .video-item h3 {
-      font-size: 1.2em;
-      margin-top: 10px;
+    .video-item p {
+      font-size: 14px;
+      color: #555;
     }
-
-    /* 响应式设计，适应不同屏幕大小 */
-    @media (max-width: 768px) {
-      #search-query {
-        width: 80%;
-      }
-
-      .video-item {
-        width: 90%;
-      }
+    .video-item a {
+      color: #007bff;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>YouTube 動画検索</h1>
+  <h1>しゃいるさんのコメント検索</h1>
   <div class="search-bar">
     <input type="text" id="search-query" placeholder="検索キーワードを入力してください...">
-    <button id="search-btn">検索</button>
+    <button id="search-button">検索</button>
   </div>
-  <div id="video-results"></div>
+  <div id="search-results"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-// 用您提供的 YouTube API 密钥替换
-const apiKey = 'AIzaSyC_vDGk4fYm-pk8sk7ZylN9hMfOiePDgkI';
+  // API 金鑰
+  const apiKey = 'AIzaSyC_vDGk4fYm-pk8sk7ZylN9hMfOiePDgkI';
 
-document.getElementById('search-btn').addEventListener('click', function() {
-    const query = document.getElementById('search-query').value.trim();
-    if (query) {
-        searchYouTube(query);
-    } else {
-        alert('キーワードを入力してください！');
+  // 頻道 ID (Shairu.ch_0801)
+  const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 頻道的 channelId
+
+  // 綁定搜尋按鈕事件
+  document.getElementById('search-button').addEventListener('click', function () {
+    const query = document.getElementById('search-query').value.trim();  // 取得輸入的搜尋關鍵字
+    document.getElementById('search-results').innerHTML = '';  // 清空舊的搜尋結果
+
+    if (!query) {
+      document.getElementById('search-results').innerHTML = '<p>キーワードを入力してください。</p>';
+      return;
     }
-});
 
-function searchYouTube(query) {
-    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`;
+    // 1. 取得頻道的影片
+    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=5&type=video&key=${apiKey}`;
+    
+    axios.get(videoSearchUrl)
+      .then(response => {
+        const videoItems = response.data.items;
+        if (videoItems.length === 0) {
+          document.getElementById('search-results').innerHTML = '<p>このチャンネルには動画がありません。</p>';
+          return;
+        }
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            displayVideos(data.items);
-        })
-        .catch(error => {
-            console.error('エラーが発生しました:', error);
-            document.getElementById('video-results').innerHTML = '<p>検索中にエラーが発生しました。</p>';
+        // 2. 對每個影片查詢留言
+        videoItems.forEach(video => {
+          const videoId = video.id.videoId;
+          const commentUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${apiKey}`;
+
+          axios.get(commentUrl)
+            .then(commentResponse => {
+              const comments = commentResponse.data.items;
+              let output = '';
+
+              comments.forEach(comment => {
+                const commentText = comment.snippet.topLevelComment.snippet.textDisplay;
+                if (commentText.includes(query)) {
+                  output += `
+                    <div class="video-item">
+                      <h3>動画タイトル: ${video.snippet.title}</h3>
+                      <p><strong>コメント：</strong>${commentText}</p>
+                      <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
+                    </div>
+                  `;
+                }
+              });
+
+              if (output) {
+                document.getElementById('search-results').innerHTML += output;
+              }
+            })
+            .catch(error => {
+              console.error('コメントの取得に失敗しました:', error);
+            });
         });
-}
+      })
+      .catch(error => {
+        console.error('動画の取得に失敗しました:', error);
+        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
+      });
+  });
+</script>
 
-function displayVideos(videos) {
-    const resultsContainer = document.getElementById('video-results');
-    resultsContainer.innerHTML = '';  // 清空之前的結果
-
-    if (videos.length === 0) {
-        resultsContainer.innerHTML = '<p>該当する動画は見つかりませんでした。</p>';
-    } else {
-        videos.forEach(video => {
-            const videoElement = document.createElement('div');
-            videoElement.classList.add('video-item');
-            videoElement.innerHTML = `
-                <img src="${video.snippet.thumbnails.high.url}" alt="${video.snippet.title}">
-                <h3><a href="https://www.youtube.com/watch?v=${video.id.videoId}" target="_blank">${video.snippet.title}</a></h3>
-                <p>${video.snippet.description}</p>
-            `;
-            resultsContainer.appendChild(videoElement);
-        });
-    }
-}
+</body>
+</html>

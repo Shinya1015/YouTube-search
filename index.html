@@ -103,6 +103,9 @@
           return;
         }
 
+        // 2. 組合結果
+        let allResults = '';
+        
         // 2. 對每個影片查詢留言
         videoItems.forEach(video => {
           const videoId = video.id.videoId;
@@ -111,23 +114,29 @@
           axios.get(commentUrl)
             .then(commentResponse => {
               const comments = commentResponse.data.items;
-              let output = '';
+              let videoMatches = false;
 
               comments.forEach(comment => {
                 const commentText = comment.snippet.topLevelComment.snippet.textDisplay;
                 if (commentText.includes(query)) {
-                  output += `
-                    <div class="video-item">
-                      <h3>動画タイトル: ${video.snippet.title}</h3>
-                      <p><strong>コメント：</strong>${commentText}</p>
-                      <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
-                    </div>
-                  `;
+                  videoMatches = true;
                 }
               });
 
-              if (output) {
-                document.getElementById('search-results').innerHTML += output;
+              if (videoMatches) {
+                allResults += `
+                  <div class="video-item">
+                    <h3>動画タイトル: ${video.snippet.title}</h3>
+                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
+                  </div>
+                `;
+              }
+
+              // 最后更新界面
+              if (allResults) {
+                document.getElementById('search-results').innerHTML = allResults;
+              } else {
+                document.getElementById('search-results').innerHTML = '<p>該当するコメントはありません。</p>';
               }
             })
             .catch(error => {

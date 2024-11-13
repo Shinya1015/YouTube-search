@@ -88,11 +88,16 @@
     document.getElementById('search-results').innerHTML = '';  // 清空舊的搜尋結果
 
     if (!query) {
-      document.getElementById('search-results').innerHTML = '<p>キーワードを入力してください。</p>';
-      return;
+      // 搜索框为空时，显示所有视频并按时间排序
+      fetchVideos();
+    } else {
+      // 搜索框不为空时，进行关键字筛选
+      searchComments(query);
     }
+  });
 
-    // 1. 取得頻道的影片，按時間排序，取得更多結果
+  // 获取所有视频并按时间排序
+  function fetchVideos() {
     const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&order=date&type=video&key=${apiKey}`;
 
     axios.get(videoSearchUrl)
@@ -103,10 +108,41 @@
           return;
         }
 
-        // 2. 組合結果
         let allResults = '';
-        
-        // 2. 對每個影片查詢留言
+        videoItems.forEach(video => {
+          const videoId = video.id.videoId;
+          allResults += `
+            <div class="video-item">
+              <img src="${video.snippet.thumbnails.high.url}" alt="${video.snippet.title}">
+              <h3>動画タイトル: ${video.snippet.title}</h3>
+              <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
+            </div>
+          `;
+        });
+
+        document.getElementById('search-results').innerHTML = allResults;
+      })
+      .catch(error => {
+        console.error('動画の取得に失敗しました:', error);
+        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
+      });
+  }
+
+  // 根据关键字搜索评论
+  function searchComments(query) {
+    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&order=date&type=video&key=${apiKey}`;
+
+    axios.get(videoSearchUrl)
+      .then(response => {
+        const videoItems = response.data.items;
+        if (videoItems.length === 0) {
+          document.getElementById('search-results').innerHTML = '<p>このチャンネルには動画がありません。</p>';
+          return;
+        }
+
+        let allResults = '';
+
+        // 查找每个视频的评论
         videoItems.forEach(video => {
           const videoId = video.id.videoId;
           const commentUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${apiKey}`;
@@ -133,7 +169,7 @@
                 `;
               }
 
-              // 最后更新界面
+              // 最后更新页面
               if (allResults) {
                 document.getElementById('search-results').innerHTML = allResults;
               } else {
@@ -149,7 +185,7 @@
         console.error('動画の取得に失敗しました:', error);
         document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
       });
-  });
+  }
 </script>
 
 </body>

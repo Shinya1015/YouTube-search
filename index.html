@@ -115,12 +115,18 @@
     const query = document.getElementById('search-query').value.trim();  // 取得輸入的搜尋關鍵字
     document.getElementById('search-results').innerHTML = '';  // 清空舊的搜尋結果
 
+    // 如果關鍵字為空，顯示所有影片
     if (!query) {
-      document.getElementById('search-results').innerHTML = '<p>キーワードを入力してください。</p>';
+      searchAllVideos();  // 呼叫搜尋所有影片的函數
       return;
     }
 
-    // 1. 取得頻道的影片
+    // 如果有關鍵字，搜尋影片與留言
+    searchVideosAndComments(query);
+  });
+
+  // 搜尋所有影片
+  function searchAllVideos() {
     const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video&order=date&key=${currentApiKey}`;
 
     axios.get(videoSearchUrl)
@@ -131,7 +137,37 @@
           return;
         }
 
-        // 2. 顯示影片列表
+        // 顯示所有影片
+        videoItems.forEach(video => {
+          const videoId = video.id.videoId;
+          const videoElement = `
+            <div class="video-item">
+              <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
+              <h3><a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">${video.snippet.title}</a></h3>
+            </div>
+          `;
+          document.getElementById('search-results').innerHTML += videoElement;
+        });
+      })
+      .catch(error => {
+        console.error('動画の取得に失敗しました:', error);
+        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
+      });
+  }
+
+  // 搜尋影片和留言
+  function searchVideosAndComments(query) {
+    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&type=video&order=date&key=${currentApiKey}`;
+
+    axios.get(videoSearchUrl)
+      .then(response => {
+        const videoItems = response.data.items;
+        if (videoItems.length === 0) {
+          document.getElementById('search-results').innerHTML = '<p>このチャンネルには動画がありません。</p>';
+          return;
+        }
+
+        // 顯示影片列表
         videoItems.forEach(video => {
           const videoId = video.id.videoId;
           const videoElement = `
@@ -142,7 +178,7 @@
           `;
           document.getElementById('search-results').innerHTML += videoElement;
 
-          // 3. 搜尋影片下方留言
+          // 搜尋該影片的留言
           searchComments(videoId, query);
         });
       })
@@ -150,7 +186,7 @@
         console.error('動画の取得に失敗しました:', error);
         document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
       });
-  });
+  }
 
   // 搜尋留言
   function searchComments(videoId, query) {
@@ -180,14 +216,4 @@
           commentSection.innerHTML = commentOutput;
           document.getElementById('search-results').appendChild(commentSection);
         } else {
-          console.log("未找到符合條件的留言。"); // 顯示沒有找到匹配的留言
-        }
-      })
-      .catch(error => {
-        console.error('留言搜尋失敗:', error);
-      });
-  }
-</script>
-
-</body>
-</html>
+          console

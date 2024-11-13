@@ -90,8 +90,8 @@
     const searchQuery = query ? encodeURIComponent(query) : '';
     const order = 'date';  // 設定為依時間排序
 
-    // 使用 YouTube Data API 查詢該頻道的留言（回放影片）
-   const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&order=time&key=${apiKey}`;
+    // 使用 YouTube Data API 查詢該頻道的影片列表
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=${order}&key=${apiKey}`;
 
     axios.get(url)
       .then(response => {
@@ -100,21 +100,39 @@
         if (response.data.items.length === 0) {
           output = '<p>現在、該キーワードに該当するコメントはありません。</p>';
         } else {
-          response.data.items.forEach(item => {
-            // 顯示包含關鍵字的留言文字
-            const commentText = item.snippet.topLevelComment.snippet.textDisplay;
-            if (commentText.includes(query)) {
-              output += `
-                <div class="video-item">
-                  <h3>動画タイトル: ${item.snippet.videoId}</h3>
-                  <p><strong>コメント：</strong>${commentText}</p>
-                  <a href="https://www.youtube.com/watch?v=${item.snippet.videoId}" target="_blank">動画を見る</a>
-                </div>
-              `;
-            }
-          });
+          // 取得的影片 ID
+          const videoIds = response.data.items.map(item => item.id.videoId).join(',');
+          
+          // 使用影片 ID 查詢評論
+          const commentsUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoIds}&key=${apiKey}`;
+          
+          axios.get(commentsUrl)
+            .then(commentResponse => {
+              commentResponse.data.items.forEach(item => {
+                // 顯示包含關鍵字的留言文字
+                const commentText = item.snippet.topLevelComment.snippet.textDisplay;
+                if (commentText.includes(query)) {
+                  output += `
+                    <div class="video-item">
+                      <h3>動画タイトル: ${item.snippet.videoId}</h3>
+                      <p><strong>コメント：</strong>${commentText}</p>
+                      <a href="https://www.youtube.com/watch?v=${item.snippet.videoId}" target="_blank">動画を見る</a>
+                    </div>
+                  `;
+                }
+              });
+              
+              // 如果沒有找到留言
+              if (!output) {
+                output = '<p>該キーワードに関連するコメントは見つかりませんでした。</p>';
+              }
+              document.getElementById('search-results').innerHTML = output;
+            })
+            .catch(error => {
+              console.error('コメント取得エラー:', error);
+              document.getElementById('search-results').innerHTML = '<p>コメント取得中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
+            });
         }
-        document.getElementById('search-results').innerHTML = output;
       })
       .catch(error => {
         console.error('発生したエラー:', error);

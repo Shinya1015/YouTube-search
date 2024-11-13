@@ -182,8 +182,8 @@
 
         comments.forEach(comment => {
           const commentText = comment.snippet.topLevelComment.snippet.textDisplay;
-          // 只顯示包含關鍵字的留言
-          if (commentText.includes(query)) {
+          // 只顯示包含關鍵字的留言，這裡會忽略大小寫
+          if (commentText.toLowerCase().includes(query.toLowerCase())) {
             commentOutput += `
               <div class="comment-item">
                 <p><strong>コメント：</strong>${commentText}</p>

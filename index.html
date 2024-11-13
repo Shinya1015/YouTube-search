@@ -91,7 +91,7 @@
     const order = 'date';  // 設定為依時間排序
 
     // 使用 YouTube Data API 查詢該頻道的留言（回放影片）
-    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&channelId=${channelId}&q=${searchQuery}&order=${order}&key=${apiKey}`;
+   const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&order=time&key=${apiKey}`;
 
     axios.get(url)
       .then(response => {

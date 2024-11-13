@@ -44,22 +44,28 @@
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
     }
     .video-item img {
-      width: 100%;
-      max-width: 200px;
+      width: 100px;
+      height: auto;
+      margin-right: 15px;
       border-radius: 4px;
-      margin-bottom: 10px;
     }
     .video-item h3 {
-      margin: 0;
-      font-size: 18px;
+      font-size: 1.2em;
+      margin-top: 0;
     }
     .video-item a {
       color: #007bff;
       text-decoration: none;
+    }
+    #video-results {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -76,11 +82,21 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-  // API 金鑰
-  const apiKey = 'AIzaSyC_vDGk4fYm-pk8sk7ZylN9hMfOiePDgkI';
+  // 使用主API金鑰和備用API金鑰
+  const apiKeyPrimary = 'AIzaSyC_vDGk4fYm-pk8sk7ZylN9hMfOiePDgkI';  // 原始 API 密钥
+  const apiKeyBackup = 'AIzaSyCrKxTruUdr0EXAm8r7c2ZspbOtx-pKLXM';  // 备用 API 密钥
 
   // 頻道 ID (Shairu.ch_0801)
   const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 頻道的 channelId
+
+  // 用來處理API請求的函式，接收API金鑰作為參數
+  function fetchVideoData(apiKey, query = '') {
+    const videoSearchUrl = query
+      ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&channelId=${channelId}&maxResults=5&order=date&type=video&key=${apiKey}`
+      : `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=5&order=date&type=video&key=${apiKey}`;
+
+    return axios.get(videoSearchUrl);
+  }
 
   // 綁定搜尋按鈕事件
   document.getElementById('search-button').addEventListener('click', function () {
@@ -88,103 +104,64 @@
     document.getElementById('search-results').innerHTML = '';  // 清空舊的搜尋結果
 
     if (!query) {
-      // 搜索框为空时，显示所有视频并按时间排序
-      fetchVideos();
+      // 如果關鍵字為空，顯示所有影片並從最新排序
+      fetchVideoData(apiKeyPrimary)
+        .then(response => {
+          displayVideos(response.data.items);
+        })
+        .catch(error => {
+          console.error('主API請求失敗，切換到備用API', error);
+          // 如果主API失敗，切換到備用API
+          fetchVideoData(apiKeyBackup)
+            .then(response => {
+              displayVideos(response.data.items);
+            })
+            .catch(error => {
+              console.error('備用API請求失敗', error);
+              document.getElementById('search-results').innerHTML = '<p>エラーが発生しました。後で再試行してください。</p>';
+            });
+        });
     } else {
-      // 搜索框不为空时，进行关键字筛选
-      searchComments(query);
+      // 如果輸入關鍵字，顯示符合條件的影片
+      fetchVideoData(apiKeyPrimary, query)
+        .then(response => {
+          displayVideos(response.data.items);
+        })
+        .catch(error => {
+          console.error('主API請求失敗，切換到備用API', error);
+          // 如果主API失敗，切換到備用API
+          fetchVideoData(apiKeyBackup, query)
+            .then(response => {
+              displayVideos(response.data.items);
+            })
+            .catch(error => {
+              console.error('備用API請求失敗', error);
+              document.getElementById('search-results').innerHTML = '<p>エラーが発生しました。後で再試行してください。</p>';
+            });
+        });
     }
   });
 
-  // 获取所有视频并按时间排序
-  function fetchVideos() {
-    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&order=date&type=video&key=${apiKey}`;
+  // 顯示影片的函式
+  function displayVideos(videos) {
+    if (videos.length === 0) {
+      document.getElementById('search-results').innerHTML = '<p>関連する動画は見つかりませんでした。</p>';
+      return;
+    }
 
-    axios.get(videoSearchUrl)
-      .then(response => {
-        const videoItems = response.data.items;
-        if (videoItems.length === 0) {
-          document.getElementById('search-results').innerHTML = '<p>このチャンネルには動画がありません。</p>';
-          return;
-        }
-
-        let allResults = '';
-        videoItems.forEach(video => {
-          const videoId = video.id.videoId;
-          allResults += `
-            <div class="video-item">
-              <img src="${video.snippet.thumbnails.high.url}" alt="${video.snippet.title}">
-              <h3>動画タイトル: ${video.snippet.title}</h3>
-              <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
-            </div>
-          `;
-        });
-
-        document.getElementById('search-results').innerHTML = allResults;
-      })
-      .catch(error => {
-        console.error('動画の取得に失敗しました:', error);
-        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
-      });
-  }
-
-  // 根据关键字搜索评论
-  function searchComments(query) {
-    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&order=date&type=video&key=${apiKey}`;
-
-    axios.get(videoSearchUrl)
-      .then(response => {
-        const videoItems = response.data.items;
-        if (videoItems.length === 0) {
-          document.getElementById('search-results').innerHTML = '<p>このチャンネルには動画がありません。</p>';
-          return;
-        }
-
-        let allResults = '';
-
-        // 查找每个视频的评论
-        videoItems.forEach(video => {
-          const videoId = video.id.videoId;
-          const commentUrl = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${apiKey}`;
-
-          axios.get(commentUrl)
-            .then(commentResponse => {
-              const comments = commentResponse.data.items;
-              let videoMatches = false;
-
-              comments.forEach(comment => {
-                const commentText = comment.snippet.topLevelComment.snippet.textDisplay;
-                if (commentText.includes(query)) {
-                  videoMatches = true;
-                }
-              });
-
-              if (videoMatches) {
-                allResults += `
-                  <div class="video-item">
-                    <img src="${video.snippet.thumbnails.high.url}" alt="${video.snippet.title}">
-                    <h3>動画タイトル: ${video.snippet.title}</h3>
-                    <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
-                  </div>
-                `;
-              }
-
-              // 最后更新页面
-              if (allResults) {
-                document.getElementById('search-results').innerHTML = allResults;
-              } else {
-                document.getElementById('search-results').innerHTML = '<p>該当するコメントはありません。</p>';
-              }
-            })
-            .catch(error => {
-              console.error('コメントの取得に失敗しました:', error);
-            });
-        });
-      })
-      .catch(error => {
-        console.error('動画の取得に失敗しました:', error);
-        document.getElementById('search-results').innerHTML = '<p>検索中にエラーが発生しました。しばらくしてからもう一度お試しください。</p>';
-      });
+    videos.forEach(video => {
+      const videoId = video.id.videoId;
+      const videoItemHtml = `
+        <div class="video-item">
+          <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}">
+          <div>
+            <h3>${video.snippet.title}</h3>
+            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
+          </div>
+        </div>
+      `;
+      document.getElementById('search-results').innerHTML += videoItemHtml;
+    });
   }
 </script>
 

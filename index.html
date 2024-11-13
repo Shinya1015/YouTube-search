@@ -145,10 +145,12 @@
     axios.get(url)
       .then(response => {
         const comments = response.data.items;
+        console.log('留言回應:', comments);  // 用於調試，檢查API回應
         let commentOutput = '';
         comments.forEach(comment => {
           const commentText = comment.snippet.topLevelComment.snippet.textDisplay;
-          if (commentText.includes(query)) {
+          // 確保留言中包含關鍵字（不區分大小寫）
+          if (commentText.toLowerCase().includes(query.toLowerCase())) {
             commentOutput += `
               <div class="comment-item">
                 <p><strong>コメント：</strong>${commentText}</p>
@@ -161,6 +163,8 @@
           commentSection.classList.add('comment-section');
           commentSection.innerHTML = commentOutput;
           document.getElementById('search-results').appendChild(commentSection);
+        } else {
+          console.log('沒有找到符合的留言');  // 用於調試
         }
       })
       .catch(error => {

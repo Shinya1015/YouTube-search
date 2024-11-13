@@ -216,4 +216,14 @@
           commentSection.innerHTML = commentOutput;
           document.getElementById('search-results').appendChild(commentSection);
         } else {
-          console
+          console.log("未找到符合條件的留言。"); // 顯示沒有找到匹配的留言
+        }
+      })
+      .catch(error => {
+        console.error('留言搜尋失敗:', error);
+      });
+  }
+</script>
+
+</body>
+</html>

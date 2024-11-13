@@ -38,19 +38,22 @@ h1 {
 
 #video-results {
     margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap; /* 确保视频项能够换行 */
+    justify-content: center; /* 居中对齐视频项 */
 }
 
 .video-item {
+    background-color: white;
     margin: 15px;
-    display: inline-block;
+    display: flex;
+    flex-direction: row; /* 横向排列图片和文字 */
     width: 300px;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    align-items: center; /* 让图片和文本垂直居中 */
 }
 
 .video-item img {
-    width: 100%;
-}
-
-.video-item h3 {
-    font-size: 1.2em;
-    margin-top: 10px;
-}
+    width: 100px; /* 缩

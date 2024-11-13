@@ -44,28 +44,36 @@
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       display: flex;
-      flex-direction: row;
       align-items: center;
     }
     .video-item img {
       width: 100px;
-      height: auto;
-      margin-right: 15px;
+      height: 100px;
+      object-fit: cover;
       border-radius: 4px;
+      margin-right: 15px;
     }
     .video-item h3 {
-      font-size: 1.2em;
-      margin-top: 0;
+      font-size: 18px;
+      margin: 0;
+    }
+    .video-item p {
+      font-size: 14px;
+      color: #555;
     }
     .video-item a {
       color: #007bff;
       text-decoration: none;
     }
-    #video-results {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 20px;
+    .comment-section {
+      margin-top: 10px;
+    }
+    .comment-item {
+      background-color: #f9f9f9;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     }
   </style>
 </head>
@@ -82,87 +90,97 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-  // 使用主API金鑰和備用API金鑰
-  const apiKeyPrimary = 'AIzaSyC_vDGk4fYm-pk8sk7ZylN9hMfOiePDgkI';  // 原始 API 密钥
-  const apiKeyBackup = 'AIzaSyCrKxTruUdr0EXAm8r7c2ZspbOtx-pKLXM';  // 备用 API 密钥
+  // 主要API金鑰
+  const apiKey = 'AIzaSyC_vDGk4fYm-pk8sk7ZylN9hMfOiePDgkI';
+  // 備用API金鑰
+  const backupApiKey = 'AIzaSyCrKxTruUdr0EXAm8r7Zc2ZspbOtx-pKLXM';
 
-  // 頻道 ID (Shairu.ch_0801)
-  const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';  // Shairu.ch_0801 頻道的 channelId
+  // YouTube頻道ID
+  const channelId = 'UCe_8qM8Wk4cU5oD3WO07gZg';
 
-  // 用來處理API請求的函式，接收API金鑰作為參數
-  function fetchVideoData(apiKey, query = '') {
-    const videoSearchUrl = query
-      ? `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&channelId=${channelId}&maxResults=5&order=date&type=video&key=${apiKey}`
-      : `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=5&order=date&type=video&key=${apiKey}`;
-
-    return axios.get(videoSearchUrl);
-  }
-
-  // 綁定搜尋按鈕事件
+  // 搜索按鈕的事件處理
   document.getElementById('search-button').addEventListener('click', function () {
-    const query = document.getElementById('search-query').value.trim();  // 取得輸入的搜尋關鍵字
-    document.getElementById('search-results').innerHTML = '';  // 清空舊的搜尋結果
+    const query = document.getElementById('search-query').value.trim();
+    document.getElementById('search-results').innerHTML = '';  // 清空之前的搜尋結果
 
     if (!query) {
-      // 如果關鍵字為空，顯示所有影片並從最新排序
-      fetchVideoData(apiKeyPrimary)
-        .then(response => {
-          displayVideos(response.data.items);
-        })
-        .catch(error => {
-          console.error('主API請求失敗，切換到備用API', error);
-          // 如果主API失敗，切換到備用API
-          fetchVideoData(apiKeyBackup)
-            .then(response => {
-              displayVideos(response.data.items);
-            })
-            .catch(error => {
-              console.error('備用API請求失敗', error);
-              document.getElementById('search-results').innerHTML = '<p>エラーが発生しました。後で再試行してください。</p>';
-            });
-        });
-    } else {
-      // 如果輸入關鍵字，顯示符合條件的影片
-      fetchVideoData(apiKeyPrimary, query)
-        .then(response => {
-          displayVideos(response.data.items);
-        })
-        .catch(error => {
-          console.error('主API請求失敗，切換到備用API', error);
-          // 如果主API失敗，切換到備用API
-          fetchVideoData(apiKeyBackup, query)
-            .then(response => {
-              displayVideos(response.data.items);
-            })
-            .catch(error => {
-              console.error('備用API請求失敗', error);
-              document.getElementById('search-results').innerHTML = '<p>エラーが発生しました。後で再試行してください。</p>';
-            });
-        });
-    }
-  });
-
-  // 顯示影片的函式
-  function displayVideos(videos) {
-    if (videos.length === 0) {
-      document.getElementById('search-results').innerHTML = '<p>関連する動画は見つかりませんでした。</p>';
+      // 如果關鍵字為空，顯示所有影片
+      searchVideos('');
       return;
     }
+    // 搜索影片和留言
+    searchVideos(query);
+  });
 
-    videos.forEach(video => {
-      const videoId = video.id.videoId;
-      const videoItemHtml = `
-        <div class="video-item">
-          <img src="${video.snippet.thumbnails.default.url}" alt="${video.snippet.title}">
-          <div>
-            <h3>${video.snippet.title}</h3>
-            <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
-          </div>
-        </div>
-      `;
-      document.getElementById('search-results').innerHTML += videoItemHtml;
-    });
+  // 搜索影片函數
+  function searchVideos(query) {
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=5&type=video&q=${encodeURIComponent(query)}&order=date&key=${apiKey}`;
+
+    axios.get(url)
+      .then(response => {
+        const videoItems = response.data.items;
+        if (videoItems.length === 0) {
+          document.getElementById('search-results').innerHTML = '<p>該関鍵字に該当する動画はありません。</p>';
+          return;
+        }
+
+        videoItems.forEach(video => {
+          const videoId = video.id.videoId;
+          // 顯示影片及留言
+          const videoElement = createVideoElement(video);
+          document.getElementById('search-results').appendChild(videoElement);
+          searchComments(videoId, query);
+        });
+      })
+      .catch(error => {
+        console.error('影片搜尋失敗:', error);
+        document.getElementById('search-results').innerHTML = '<p>搜尋影片時發生錯誤，請稍後再試。</p>';
+      });
   }
+
+  // 搜索影片留言
+  function searchComments(videoId, query) {
+    const url = `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${apiKey}`;
+
+    axios.get(url)
+      .then(response => {
+        const comments = response.data.items;
+        let commentOutput = '';
+        comments.forEach(comment => {
+          const commentText = comment.snippet.topLevelComment.snippet.textDisplay;
+          if (commentText.includes(query)) {
+            commentOutput += `
+              <div class="comment-item">
+                <p><strong>コメント：</strong>${commentText}</p>
+              </div>
+            `;
+          }
+        });
+        if (commentOutput) {
+          const commentSection = document.createElement('div');
+          commentSection.classList.add('comment-section');
+          commentSection.innerHTML = commentOutput;
+          document.getElementById('search-results').appendChild(commentSection);
+        }
+      })
+      .catch(error => {
+        console.error('留言搜尋失敗:', error);
+      });
+  }
+
+  // 創建影片元素
+  function createVideoElement(video) {
+    const videoElement = document.createElement('div');
+    videoElement.classList.add('video-item');
+    videoElement.innerHTML = `
+      <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
+      <div>
+        <h3><a href="https://www.youtube.com/watch?v=${video.id.videoId}" target="_blank">${video.snippet.title}</a></h3>
+      </div>
+    `;
+    return videoElement;
+  }
+
 </script>
 
 </body>

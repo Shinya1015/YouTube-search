@@ -43,19 +43,19 @@
       margin-bottom: 20px;
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-    .video-item h3 {
-      margin: 0;
-      font-size: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
     .video-item img {
       width: 100%;
       max-width: 200px;
       border-radius: 4px;
+      margin-bottom: 10px;
     }
-    .video-item p {
-      font-size: 14px;
-      color: #555;
+    .video-item h3 {
+      margin: 0;
+      font-size: 18px;
     }
     .video-item a {
       color: #007bff;
@@ -92,9 +92,9 @@
       return;
     }
 
-    // 1. 取得頻道的影片
-    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=5&type=video&key=${apiKey}`;
-    
+    // 1. 取得頻道的影片，按時間排序，取得更多結果
+    const videoSearchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&maxResults=10&order=date&type=video&key=${apiKey}`;
+
     axios.get(videoSearchUrl)
       .then(response => {
         const videoItems = response.data.items;
@@ -126,6 +126,7 @@
               if (videoMatches) {
                 allResults += `
                   <div class="video-item">
+                    <img src="${video.snippet.thumbnails.high.url}" alt="${video.snippet.title}">
                     <h3>動画タイトル: ${video.snippet.title}</h3>
                     <a href="https://www.youtube.com/watch?v=${videoId}" target="_blank">動画を見る</a>
                   </div>
